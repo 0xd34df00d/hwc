@@ -23,6 +23,10 @@ dependencies:
 - base >= 4.7 && < 5
 - bytestring
 
+ghc-options:
+- -fllvm
+- -O2
+
 library:
   source-dirs: src
 
