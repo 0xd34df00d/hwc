@@ -20,4 +20,5 @@ The final code turns out to be a bit less than idiomatic
 but:
 
 * Even what I would call a totally idiomatic implementation still manages to achieve a significant (2x-3x) improvement over C/coreutils.
+* There's even no mutable state, no `ST`, no such things at all.
 * We're competing with C after all.
