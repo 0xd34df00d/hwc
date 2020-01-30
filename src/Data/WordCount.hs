@@ -26,3 +26,4 @@ wc s = (cs, ws, ls)
         addWord | wasSpace = 0
                 | isSp = 1
                 | otherwise = 0
+{-# INLINE wc #-}
