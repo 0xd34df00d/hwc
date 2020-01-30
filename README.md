@@ -4,6 +4,10 @@ This is the common `wc` command, implemented in Haskell (or, to be more precise,
 Turns out that it's about 4-6 times faster than GNU coreutils' `wc`,
 expressed in about 18 lines of more or less idiomatic Haskell.
 
+For now, being rather a PoC,
+`hwc` only supports counting bytes, words and lines, and does not have any command-line option.
+Counting different types of statistics in a composable and _efficient_ manner is the actual next step for `hwc`.
+
 This "project" is largely inspired by [this](https://chrispenner.ca/posts/wc) blog post.
 The author of that post manages to beat the C version by resorting to parallel input file handling
 (and that's a good demonstration — go figure how to parallelize the C version correctly!),
