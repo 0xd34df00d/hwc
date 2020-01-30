@@ -3,8 +3,7 @@
 
 module Data.WordCount where
 
-import qualified Data.ByteString.Lazy.Char8 as BS
-import Data.Char
+import qualified Data.ByteString.Lazy as BS
 
 data State = State
   { cs :: Int
@@ -20,9 +19,9 @@ wc s = (cs, ws, ls)
 
     go State { .. } c = State (cs + 1) (ws + addWord) (ls + addLine) isSp
       where
-        isSp | isSpace c = 1
+        isSp | c == 32 || c - 9 <= 4 = 1
              | otherwise = 0
-        addLine | c == '\n' = 1
+        addLine | c == 10 = 1
                 | otherwise = 0
         addWord = (1 - wasSpace) * isSp
 {-# INLINE wc #-}
