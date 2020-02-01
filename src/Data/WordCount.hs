@@ -6,18 +6,18 @@ module Data.WordCount where
 import qualified Data.ByteString.Lazy as BS
 
 data State = State
-  { cs :: Int
+  { bs :: Int
   , ws :: Int
   , ls :: Int
   , wasSpace :: Int
   }
 
 wc :: BS.ByteString -> (Int, Int, Int)
-wc s = (cs, ws, ls)
+wc s = (bs, ws, ls)
   where
     State { .. } = BS.foldl' go (State 0 0 0 0) s
 
-    go State { .. } c = State (cs + 1) (ws + addWord) (ls + addLine) isSp
+    go State { .. } c = State (bs + 1) (ws + addWord) (ls + addLine) isSp
       where
         isSp | c == 32 || c - 9 <= 4 = 1
              | otherwise = 0
