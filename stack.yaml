@@ -1,3 +1,5 @@
 resolver: nightly-2020-01-29
 packages:
 - .
+extra-deps:
+- bytestring-mmap-0.2.2

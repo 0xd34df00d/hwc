@@ -3,7 +3,7 @@
 
 module Data.WordCount where
 
-import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString as BS
 
 data State = State
   { bs :: Int
