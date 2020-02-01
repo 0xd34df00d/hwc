@@ -13,7 +13,7 @@ data State = State
   }
 
 wc :: BS.ByteString -> (Int, Int, Int)
-wc s = (bs, ws, ls)
+wc s = (bs, ws + 1 - wasSpace, ls)
   where
     State { .. } = BS.foldl' go (State 0 0 0 0) s
 
