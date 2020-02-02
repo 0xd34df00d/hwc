@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications, DataKinds #-}
+
 module Main where
 
 import qualified Data.ByteString.Lazy.Char8 as BS
@@ -10,4 +12,4 @@ main :: IO ()
 main = do
   [path] <- getArgs
   contents <- unsafeMMapFile path
-  print $ wc contents
+  print $ wc @'Words contents
