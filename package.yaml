@@ -26,6 +26,7 @@ dependencies:
 ghc-options:
 - -fllvm
 - -O2
+- -Wall
 
 library:
   source-dirs: src
