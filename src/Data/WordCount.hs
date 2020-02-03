@@ -41,15 +41,17 @@ instance Statistic 'Bytes where
   extractState = id
   compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (BS.length str))
 
+data WordsState = WordsState { ws :: Int, wasSpace :: Int }
+
 instance Statistic 'Words where
   type ResultOf 'Words = Tagged 'Words
-  type StateOf 'Words = Pair (Tagged 'Words) (Tagged 'Words)
+  type StateOf 'Words = WordsState
   type CompTyOf 'Words = 'ByteOnly
-  initState = Pair 0 0
-  extractState (Pair ws wasSpace) = ws + 1 - wasSpace
+  initState = WordsState 0 0
+  extractState WordsState { .. } = Tagged (ws + 1 - wasSpace)
   compute = ByteOnlyComputer step
     where
-      step (Pair ws wasSpace) c = Pair (ws + (1 - wasSpace) * isSp) isSp
+      step WordsState { .. } c = WordsState (ws + (1 - wasSpace) * isSp) isSp
         where
           isSp | c == 32 || c - 9 <= 4 = 1
                | otherwise = 0
