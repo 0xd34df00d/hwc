@@ -72,4 +72,3 @@ wc s = extractState $! runCompute compute
     runCompute :: StatComputerOf a -> StateOf a
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
-{-# SPECIALIZE wc :: BS.ByteString -> Tagged 'Words #-}
