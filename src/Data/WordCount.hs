@@ -1,5 +1,6 @@
 {-# LANGUAGE Strict #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 
 module Data.WordCount where
 
