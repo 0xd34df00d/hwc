@@ -25,13 +25,15 @@ data StatComputer st compTy where
   ByteOnlyComputer :: (st -> Word8 -> st)
                    -> StatComputer st 'ByteOnly
 
+type StatComputerOf a = StatComputer (StateOf a) (CompTyOf a)
+
 class Statistic a where
   type ResultOf a = k | k -> a
   type StateOf a = k | k -> a
   type CompTyOf a :: StatCompTyOf
   initState :: StateOf a
   extractState :: StateOf a -> ResultOf a
-  compute :: StatComputer (StateOf a) (CompTyOf a)
+  compute :: StatComputerOf a
 
 instance Statistic 'Bytes where
   type ResultOf 'Bytes = Tagged 'Bytes
@@ -67,7 +69,7 @@ instance Statistic 'Lines where
 wc :: forall a. Statistic a => BS.ByteString -> ResultOf a
 wc s = extractState $! runCompute compute
   where
-    runCompute :: StatComputer (StateOf a) (CompTyOf a) -> StateOf a
+    runCompute :: StatComputerOf a -> StateOf a
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
 {-# SPECIALIZE wc :: BS.ByteString -> Tagged 'Words #-}
