@@ -69,3 +69,13 @@ wc s = extractState $! runCompute compute
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
 {-# SPECIALIZE wc :: BS.ByteString -> Tagged 'Words #-}
+
+{-
+wc :: BS.ByteString -> Tagged 'Words
+wc s = extractState $! BS.foldl' step (initState :: Pair (Tagged 'Words) (Tagged 'Words)) s
+  where
+    step (Pair ws wasSpace) c = Pair (ws + (1 - wasSpace) * isSp) isSp
+      where
+        isSp | c == 32 || c - 9 <= 4 = 1
+             | otherwise = 0
+             -}
