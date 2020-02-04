@@ -1,7 +1,7 @@
 {-# LANGUAGE Strict, RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilyDependencies, PolyKinds, DataKinds, GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE TypeFamilyDependencies, PolyKinds, DataKinds, GADTs, TypeOperators #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.WordCount where
@@ -9,14 +9,18 @@ module Data.WordCount where
 import qualified Data.ByteString as BS
 import Data.Word
 
-data Pair a b = Pair a b
+infixr 5 :::
+data a ::: b = a ::: b deriving (Show)
 
 data Statistics = Bytes | Words | Lines
 
-newtype Tagged a = Tagged Int
-  deriving (Show, Num)
+newtype Tagged a = Tagged Int deriving (Show, Num)
 
 data StatCompTyOf = Chunked | ByteOnly
+
+type family CombineCompTy a b where
+  CombineCompTy 'Chunked 'Chunked = 'Chunked
+  CombineCompTy _ _ = 'ByteOnly
 
 data StatComputer st compTy where
   ChunkedComputer :: (st -> Word8 -> st)
@@ -65,6 +69,20 @@ instance Statistic 'Lines where
   initState = 0
   extractState = id
   compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (BS.count 10 str))
+
+instance (Statistic a, Statistic b) => Statistic (a '::: b) where
+  type ResultOf (a '::: b) = ResultOf a ::: ResultOf b
+  type StateOf (a '::: b) = StateOf a ::: StateOf b
+  type CompTyOf (a '::: b) = CombineCompTy (CompTyOf a) (CompTyOf b)
+  initState = initState ::: initState
+  extractState (a ::: b) = extractState a ::: extractState b
+  compute = case (compute :: StatComputerOf a, compute :: StatComputerOf b) of
+                 (ByteOnlyComputer a, ChunkedComputer b _) -> ByteOnlyComputer $ combine a b
+                 (ChunkedComputer a _, ByteOnlyComputer b) -> ByteOnlyComputer $ combine a b
+                 (ByteOnlyComputer a, ByteOnlyComputer b)  -> ByteOnlyComputer $ combine a b
+                 (ChunkedComputer stepA chunkA, ChunkedComputer stepB chunkB) -> ChunkedComputer (combine stepA stepB) (combine chunkA chunkB)
+    where
+      combine fa fb = \(a ::: b) w -> fa a w ::: fb b w
 
 wc :: forall a. Statistic a => BS.ByteString -> ResultOf a
 wc s = extractState $! runCompute compute
