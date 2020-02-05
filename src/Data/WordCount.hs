@@ -1,12 +1,13 @@
 {-# LANGUAGE Strict, RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses, UndecidableInstances, FlexibleInstances #-}
-{-# LANGUAGE TypeFamilyDependencies, FunctionalDependencies, PolyKinds, DataKinds, GADTs, TypeOperators #-}
+{-# LANGUAGE TypeFamilyDependencies, FunctionalDependencies, PolyKinds, DataKinds, GADTs, TypeOperators, TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.WordCount where
 
 import qualified Data.ByteString as BS
+import Data.Proxy
 import Data.Word
 
 infixr 5 :::
@@ -73,3 +74,21 @@ wc s = extractState $! runCompute compute
     runCompute :: StatComputer st comp -> st
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
+
+data SomeStats where
+  MkSomeStats :: (Statistic s res st comp, Show res) => proxy s -> SomeStats
+
+wc' :: SomeStats -> BS.ByteString -> String
+wc' (MkSomeStats (_ :: proxy s)) str = show $ wc @s str
+{-# INLINE wc' #-}
+
+promoteStat :: Statistics -> SomeStats
+promoteStat Bytes = MkSomeStats (Proxy :: Proxy 'Bytes)
+promoteStat Words = MkSomeStats (Proxy :: Proxy 'Words)
+promoteStat Lines = MkSomeStats (Proxy :: Proxy 'Lines)
+{-# INLINE promoteStat #-}
+
+promoteStats :: [Statistics] -> SomeStats
+promoteStats [s] = promoteStat s
+promoteStats (s:ss) = case (promoteStat s, promoteStats ss) of
+                           (MkSomeStats (_ :: proxy1 s), MkSomeStats (_ :: proxy2 ss)) -> MkSomeStats (Proxy :: Proxy (s '::: ss))
