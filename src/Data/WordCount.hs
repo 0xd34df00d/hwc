@@ -43,7 +43,7 @@ instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
 data WordsState = WordsState { ws :: Int, wasSpace :: Int }
 
 instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
-  initState = WordsState 0 0
+  initState = WordsState 0 1
   extractState WordsState { .. } = Tagged (ws + 1 - wasSpace)
   compute = ByteOnlyComputer step
     where
