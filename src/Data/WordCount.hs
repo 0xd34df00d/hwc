@@ -1,7 +1,7 @@
 {-# LANGUAGE Strict, RecordWildCards #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses, UndecidableInstances #-}
-{-# LANGUAGE TypeFamilyDependencies, PolyKinds, DataKinds, GADTs, TypeOperators #-}
+{-# LANGUAGE MultiParamTypeClasses, UndecidableInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeFamilyDependencies, FunctionalDependencies, PolyKinds, DataKinds, GADTs, TypeOperators #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.WordCount where
@@ -29,30 +29,19 @@ data StatComputer st compTy where
   ByteOnlyComputer :: (st -> Word8 -> st)
                    -> StatComputer st 'ByteOnly
 
-type StatComputerOf a = StatComputer (StateOf a) (CompTyOf a)
+class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp where
+  initState :: st
+  extractState :: st -> res
+  compute :: StatComputer st comp
 
-class Statistic a where
-  type ResultOf a = k | k -> a
-  type StateOf a = k | k -> a
-  type CompTyOf a :: StatCompTyOf
-  initState :: StateOf a
-  extractState :: StateOf a -> ResultOf a
-  compute :: StatComputerOf a
-
-instance Statistic 'Bytes where
-  type ResultOf 'Bytes = Tagged 'Bytes
-  type StateOf 'Bytes = Tagged 'Bytes
-  type CompTyOf 'Bytes = 'Chunked
+instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
   extractState = id
   compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (BS.length str))
 
 data WordsState = WordsState { ws :: Int, wasSpace :: Int }
 
-instance Statistic 'Words where
-  type ResultOf 'Words = Tagged 'Words
-  type StateOf 'Words = WordsState
-  type CompTyOf 'Words = 'ByteOnly
+instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
   initState = WordsState 0 0
   extractState WordsState { .. } = Tagged (ws + 1 - wasSpace)
   compute = ByteOnlyComputer step
@@ -62,21 +51,15 @@ instance Statistic 'Words where
           isSp | c == 32 || c - 9 <= 4 = 1
                | otherwise = 0
 
-instance Statistic 'Lines where
-  type ResultOf 'Lines = Tagged 'Lines
-  type StateOf 'Lines = Tagged 'Lines
-  type CompTyOf 'Lines = 'Chunked
+instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   initState = 0
   extractState = id
   compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (BS.count 10 str))
 
-instance (Statistic a, Statistic b) => Statistic (a '::: b) where
-  type ResultOf (a '::: b) = ResultOf a ::: ResultOf b
-  type StateOf (a '::: b) = StateOf a ::: StateOf b
-  type CompTyOf (a '::: b) = CombineCompTy (CompTyOf a) (CompTyOf b)
+instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ CombineCompTy compa compb) => Statistic (a '::: b) (resa ::: resb) (sta ::: stb) comp where
   initState = initState ::: initState
   extractState (a ::: b) = extractState a ::: extractState b
-  compute = case (compute :: StatComputerOf a, compute :: StatComputerOf b) of
+  compute = case (compute :: StatComputer sta compa, compute :: StatComputer stb compb) of
                  (ByteOnlyComputer a, ChunkedComputer b _) -> ByteOnlyComputer $ combine a b
                  (ChunkedComputer a _, ByteOnlyComputer b) -> ByteOnlyComputer $ combine a b
                  (ByteOnlyComputer a, ByteOnlyComputer b)  -> ByteOnlyComputer $ combine a b
@@ -84,9 +67,9 @@ instance (Statistic a, Statistic b) => Statistic (a '::: b) where
     where
       combine fa fb = \(a ::: b) w -> fa a w ::: fb b w
 
-wc :: forall a. Statistic a => BS.ByteString -> ResultOf a
+wc :: forall a res st comp. Statistic a res st comp => BS.ByteString -> res
 wc s = extractState $! runCompute compute
   where
-    runCompute :: StatComputerOf a -> StateOf a
+    runCompute :: StatComputer st comp -> st
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
