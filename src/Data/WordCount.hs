@@ -9,13 +9,7 @@ module Data.WordCount where
 import qualified Data.ByteString as BS
 import Data.Word
 
-infixr 5 :::
-data a ::: b = a ::: b deriving (Show)
-
 data Statistics = Bytes | Words | Lines
-
-newtype Tagged a = Tagged Int deriving (Show, Num)
-
 data StatCompTyOf = Chunked | ByteOnly
 
 type family CombineCompTy a b where
@@ -33,6 +27,8 @@ class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp 
   initState :: st
   extractState :: st -> res
   compute :: StatComputer st comp
+
+newtype Tagged a = Tagged Int deriving (Show, Num)
 
 instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
@@ -56,7 +52,11 @@ instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   extractState = id
   compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (BS.count 10 str))
 
-instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ CombineCompTy compa compb) => Statistic (a '::: b) (resa ::: resb) (sta ::: stb) comp where
+infixr 5 :::
+data a ::: b = a ::: b deriving (Show)
+
+instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ CombineCompTy compa compb)
+       => Statistic (a '::: b) (resa ::: resb) (sta ::: stb) comp where
   initState = initState ::: initState
   extractState (a ::: b) = extractState a ::: extractState b
   compute = case (compute :: StatComputer sta compa, compute :: StatComputer stb compb) of
