@@ -9,7 +9,7 @@ module Data.WordCount where
 import qualified Data.ByteString as BS
 import Data.Word
 
-data Statistics = Bytes | Words | Lines
+data Statistics = Bytes | Words | Lines deriving (Eq, Ord)
 data StatCompTyOf = Chunked | ByteOnly
 
 type family CombineCompTy a b where
