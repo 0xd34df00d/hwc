@@ -26,6 +26,7 @@ data StatComputer st compTy where
 class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp where
   initState :: st
   extractState :: st -> res
+  prettyPrint :: res -> String
   compute :: StatComputer st comp
 
 newtype Tagged a = Tagged Int deriving (Eq, Show, Num)
@@ -33,6 +34,7 @@ newtype Tagged a = Tagged Int deriving (Eq, Show, Num)
 instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
   extractState = id
+  prettyPrint (Tagged n) = show n <> " bytes"
   compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (BS.length str))
 
 data WordsState = WordsState { ws :: Int, wasSpace :: Int }
@@ -40,6 +42,7 @@ data WordsState = WordsState { ws :: Int, wasSpace :: Int }
 instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
   initState = WordsState 0 1
   extractState WordsState { .. } = Tagged (ws + 1 - wasSpace)
+  prettyPrint (Tagged n) = show n <> " words"
   compute = ByteOnlyComputer step
     where
       step WordsState { .. } c = WordsState (ws + (1 - wasSpace) * isSp) isSp
@@ -50,6 +53,7 @@ instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
 instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   initState = 0
   extractState = id
+  prettyPrint (Tagged n) = show n <> " lines"
   compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (BS.count 10 str))
 
 infixr 5 :::
@@ -59,6 +63,7 @@ instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ Combine
        => Statistic (a '::: b) (resa ::: resb) (sta ::: stb) comp where
   initState = initState ::: initState
   extractState (a ::: b) = extractState a ::: extractState b
+  prettyPrint (a ::: b) = prettyPrint a <> "\n" <> prettyPrint b
   compute = case (compute :: StatComputer sta compa, compute :: StatComputer stb compb) of
                  (ByteOnlyComputer a, ChunkedComputer b _) -> ByteOnlyComputer $ combine a b
                  (ChunkedComputer a _, ByteOnlyComputer b) -> ByteOnlyComputer $ combine a b
