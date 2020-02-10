@@ -56,3 +56,4 @@ tests:
     - hwc
     - hspec
     - QuickCheck
+    - text
