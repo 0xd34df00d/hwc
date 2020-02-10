@@ -55,5 +55,6 @@ tests:
     dependencies:
     - hwc
     - hspec
+    - hspec-core
     - QuickCheck
     - text

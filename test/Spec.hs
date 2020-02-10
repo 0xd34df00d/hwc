@@ -6,6 +6,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import Data.List
 import Test.Hspec
+import Test.Hspec.Core.QuickCheck
 import Test.QuickCheck
 
 import Data.WordCount
@@ -16,7 +17,7 @@ wrapUnicode ustr = (T.encodeUtf8 txt, txt)
     txt = T.pack $ getUnicodeString ustr
 
 main :: IO ()
-main = hspec $ do
+main = hspec $ parallel $ modifyMaxSuccess (const 10000) $ modifyMaxSize (const 1000) $ do
   describe "ASCII support" $ do
     it "Counts bytes correctly" $ property $
       \(getASCIIString -> str) -> wc @'Bytes (BS.pack str) `shouldBe` genericLength str
