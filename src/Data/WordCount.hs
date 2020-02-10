@@ -9,7 +9,7 @@ module Data.WordCount where
 import qualified Data.ByteString as BS
 import Data.Word
 
-data Statistics = Bytes | Words | Lines deriving (Eq, Ord)
+data Statistics = Bytes | Chars | Words | Lines deriving (Eq, Ord)
 data StatCompTyOf = Chunked | ByteOnly
 
 type family CombineCompTy a b where
@@ -36,6 +36,15 @@ instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   extractState = id
   prettyPrint (Tagged n) = show n <> " bytes"
   compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (BS.length str))
+
+instance Statistic 'Chars (Tagged 'Chars) (Tagged 'Chars) 'ByteOnly where
+  initState = 0
+  extractState = id
+  prettyPrint (Tagged n) = show n <> " characters"
+  compute = ByteOnlyComputer step
+    where
+      step cnt c | c <= 127 || c >= 192 = cnt + 1
+                 | otherwise = cnt
 
 data WordsState = WordsState { ws :: Int, wasSpace :: Int }
 
