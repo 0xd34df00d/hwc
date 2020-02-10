@@ -28,7 +28,7 @@ class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp 
   extractState :: st -> res
   compute :: StatComputer st comp
 
-newtype Tagged a = Tagged Int deriving (Show, Num)
+newtype Tagged a = Tagged Int deriving (Eq, Show, Num)
 
 instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
