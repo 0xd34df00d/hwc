@@ -33,7 +33,7 @@ options = Options
 main :: IO ()
 main = do
   Options { .. } <- execParser $ info (options <**> helper) (fullDesc <> progDesc "Print newline, word, and byte counts for each file")
-  let selectedStats = map snd $ filter fst [(countBytes, Bytes), (countWords, Words), (countLines, Lines)]
+  let selectedStats = map snd $ filter fst [(countBytes, Bytes), (countChars, Chars), (countWords, Words), (countMaxLineLength, MaxLL), (countLines, Lines)]
   let stats | null selectedStats = [Bytes, Words, Lines]
             | otherwise = selectedStats
   forM_ files $ \path -> do
