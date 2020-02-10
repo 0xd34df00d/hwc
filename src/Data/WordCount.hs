@@ -29,13 +29,13 @@ class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp 
   prettyPrint :: res -> String
   compute :: StatComputer st comp
 
-newtype Tagged a = Tagged Int deriving (Eq, Show, Num)
+newtype Tagged a = Tagged Word64 deriving (Eq, Show, Num)
 
 instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
   extractState = id
   prettyPrint (Tagged n) = show n <> " bytes"
-  compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (BS.length str))
+  compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (fromIntegral $ BS.length str))
 
 instance Statistic 'Chars (Tagged 'Chars) (Tagged 'Chars) 'ByteOnly where
   initState = 0
@@ -46,7 +46,7 @@ instance Statistic 'Chars (Tagged 'Chars) (Tagged 'Chars) 'ByteOnly where
       step cnt c | c <= 127 || c >= 192 = cnt + 1
                  | otherwise = cnt
 
-data WordsState = WordsState { ws :: Int, wasSpace :: Int }
+data WordsState = WordsState { ws :: Word64, wasSpace :: Word64 }
 
 instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
   initState = WordsState 0 1
@@ -63,7 +63,7 @@ instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   initState = 0
   extractState = id
   prettyPrint (Tagged n) = show n <> " lines"
-  compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (BS.count 10 str))
+  compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (fromIntegral $ BS.count 10 str))
 
 infixr 5 :::
 data a ::: b = a ::: b deriving (Show)
