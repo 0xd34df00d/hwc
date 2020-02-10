@@ -1,4 +1,4 @@
-{-# LANGUAGE Strict, RecordWildCards #-}
+{-# LANGUAGE Strict, RecordWildCards, BinaryLiterals #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses, UndecidableInstances, FlexibleInstances #-}
 {-# LANGUAGE TypeFamilyDependencies, FunctionalDependencies, PolyKinds, DataKinds, GADTs, TypeOperators #-}
@@ -7,6 +7,7 @@
 module Data.WordCount where
 
 import qualified Data.ByteString as BS
+import Data.Bits
 import Data.Word
 
 data Statistics = Bytes | Chars | Words | Lines deriving (Eq, Ord)
@@ -41,10 +42,9 @@ instance Statistic 'Chars (Tagged 'Chars) (Tagged 'Chars) 'ByteOnly where
   initState = 0
   extractState = id
   prettyPrint (Tagged n) = show n <> " characters"
-  compute = ByteOnlyComputer step
-    where
-      step cnt c | c <= 127 || c >= 192 = cnt + 1
-                 | otherwise = cnt
+  compute = ByteOnlyComputer $ \cnt c -> cnt + 1 - fromIntegral (   ((c .&. 0b10000000) `shiftR` 7)
+                                                                .&. (1 - ((c .&. 0b01000000) `shiftR` 6))
+                                                                )
 
 data WordsState = WordsState { ws :: Word64, wasSpace :: Word64 }
 
