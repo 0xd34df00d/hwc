@@ -10,7 +10,7 @@ import qualified Data.ByteString as BS
 import Data.Bits
 import Data.Word
 
-data Statistics = Bytes | Chars | Words | Lines deriving (Eq, Ord)
+data Statistics = Bytes | Chars | Words | MaxLL | Lines deriving (Eq, Ord)
 data StatCompTyOf = Chunked | ByteOnly
 
 type family CombineCompTy a b where
@@ -58,6 +58,20 @@ instance Statistic 'Words (Tagged 'Words) WordsState 'ByteOnly where
         where
           isSp | c == 32 || c - 9 <= 4 = 1
                | otherwise = 0
+
+data MaxLLState = MaxLLState { maxLen :: Word64, curLen :: Word64 }
+
+instance Statistic 'MaxLL (Tagged 'MaxLL) MaxLLState 'ByteOnly where
+  initState = MaxLLState 0 0
+  extractState MaxLLState { .. } = Tagged $ max maxLen curLen
+  prettyPrint (Tagged n) = show n <> " max line length"
+  compute = ByteOnlyComputer step
+    where
+      step MaxLLState { .. } 9 = MaxLLState maxLen $ curLen + 8 - (curLen `rem` 8)
+      step MaxLLState { .. } c | c == 10
+                              || c == 12
+                              || c == 13 = MaxLLState (max maxLen curLen) 0
+      step MaxLLState { .. } _ = MaxLLState maxLen (curLen + 1)
 
 instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   initState = 0
