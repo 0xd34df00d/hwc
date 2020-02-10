@@ -19,7 +19,7 @@ dispatch bs = reify ''Statistics >>= \case
   _ -> fail "unsupported type"
 
 buildMatch :: Name -> [Name] -> Match
-buildMatch bs consNames = Match (ListP $ (`ConP` []) <$> consNames) (NormalB $ VarE 'show `AppE` (wcCall `AppE` VarE bs)) []
+buildMatch bs consNames = Match (ListP $ (`ConP` []) <$> consNames) (NormalB $ VarE 'prettyPrint `AppE` (wcCall `AppE` VarE bs)) []
   where
     wcCall = VarE 'wc `AppTypeE` foldr1 f (PromotedT <$> consNames)
     f accTy promotedTy = PromotedT '(:::) `AppT` accTy `AppT` promotedTy
