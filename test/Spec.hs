@@ -4,6 +4,7 @@
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import Data.Char
 import Data.List
 import Test.Hspec
 import Test.Hspec.Core.QuickCheck
@@ -15,6 +16,10 @@ wrapUnicode :: UnicodeString -> (BS.ByteString, T.Text)
 wrapUnicode ustr = (T.encodeUtf8 txt, txt)
   where
     txt = T.pack $ getUnicodeString ustr
+
+replaceNonAsciiSpaces :: Char -> Char
+replaceNonAsciiSpaces ch | ch >= chr 127 && isSpace ch = '_'
+                         | otherwise = ch
 
 main :: IO ()
 main = hspec $ parallel $ modifyMaxSuccess (const 10000) $ modifyMaxSize (const 1000) $ do
@@ -29,6 +34,6 @@ main = hspec $ parallel $ modifyMaxSuccess (const 10000) $ modifyMaxSize (const 
     it "Counts bytes correctly" $ property $
       \(wrapUnicode -> (bs, _))   -> wc @'Bytes bs `shouldBe` fromIntegral (BS.length bs)
     it "Counts words correctly" $ property $
-      \(wrapUnicode -> (bs, txt)) -> wc @'Words bs `shouldBe` genericLength (T.words txt)
+      \(wrapUnicode -> (bs, txt)) -> wc @'Words bs `shouldBe` genericLength (T.words $ T.map replaceNonAsciiSpaces txt)
     it "Counts lines correctly" $ property $
       \(wrapUnicode -> (bs, txt)) -> wc @'Lines bs `shouldBe` fromIntegral (T.count "\n" txt)
