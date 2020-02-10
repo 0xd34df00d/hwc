@@ -26,6 +26,8 @@ main = hspec $ parallel $ modifyMaxSuccess (const 10000) $ modifyMaxSize (const 
   describe "ASCII support" $ do
     it "Counts bytes correctly" $ property $
       \(getASCIIString -> str) -> wc @'Bytes (BS.pack str) `shouldBe` genericLength str
+    it "Counts chars correctly" $ property $
+      \(getASCIIString -> str) -> wc @'Chars (BS.pack str) `shouldBe` genericLength str
     it "Counts words correctly" $ property $
       \(getASCIIString -> str) -> wc @'Words (BS.pack str) `shouldBe` genericLength (words str)
     it "Counts lines correctly" $ property $
@@ -33,6 +35,8 @@ main = hspec $ parallel $ modifyMaxSuccess (const 10000) $ modifyMaxSize (const 
   describe "UTF8 support" $ do
     it "Counts bytes correctly" $ property $
       \(wrapUnicode -> (bs, _))   -> wc @'Bytes bs `shouldBe` fromIntegral (BS.length bs)
+    it "Counts chars correctly" $ property $
+      \(wrapUnicode -> (bs, txt)) -> wc @'Chars bs `shouldBe` fromIntegral (T.length txt)
     it "Counts words correctly" $ property $
       \(wrapUnicode -> (bs, txt)) -> wc @'Words bs `shouldBe` genericLength (T.words $ T.map replaceNonAsciiSpaces txt)
     it "Counts lines correctly" $ property $
