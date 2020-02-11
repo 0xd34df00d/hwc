@@ -38,4 +38,4 @@ main = do
             | otherwise = selectedStats
   forM_ files $ \path -> do
     contents <- unsafeMMapFile path
-    putStrLn $ $(dispatch 'contents) stats
+    putStrLn $ $(dispatch 'wc 'contents) stats
