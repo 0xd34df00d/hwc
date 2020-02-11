@@ -24,6 +24,7 @@ dependencies:
 - bytestring-mmap
 - optparse-applicative
 - template-haskell
+- unix
 
 ghc-options:
 - -fllvm

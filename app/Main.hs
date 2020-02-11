@@ -5,8 +5,10 @@
 
 module Main where
 
+import qualified Data.ByteString.Lazy as BSL
 import Control.Monad
 import Options.Applicative
+import System.Posix.Files
 import System.IO.Posix.MMap
 
 import Data.Dispatch
@@ -30,6 +32,14 @@ options = Options
   <*> switch (long "words" <> short 'w' <> help "print the word counts")
   <*> some (argument str (metavar "FILES..."))
 
+countMMapped, countReading :: [Statistics] -> FilePath -> IO ()
+countMMapped stats path = do
+  contents <- unsafeMMapFile path
+  putStrLn $ $(dispatch 'wc 'contents) stats
+countReading stats path = do
+  contents <- BSL.readFile path
+  putStrLn $ $(dispatch 'wcLazy 'contents) stats
+
 main :: IO ()
 main = do
   Options { .. } <- execParser $ info (options <**> helper) (fullDesc <> progDesc "Print newline, word, and byte counts for each file")
@@ -37,5 +47,7 @@ main = do
   let stats | null selectedStats = [Bytes, Words, Lines]
             | otherwise = selectedStats
   forM_ files $ \path -> do
-    contents <- unsafeMMapFile path
-    putStrLn $ $(dispatch 'wc 'contents) stats
+    stat <- getFileStatus path
+    if isRegularFile stat || isSymbolicLink stat
+      then countMMapped stats path
+      else countReading stats path
