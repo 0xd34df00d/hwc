@@ -7,6 +7,7 @@
 module Data.WordCount where
 
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BSL
 import Data.Bits
 import Data.Word
 
@@ -101,3 +102,10 @@ wc s = extractState $! runCompute compute
     runCompute :: StatComputer st comp -> st
     runCompute (ByteOnlyComputer step) = BS.foldl' step initState s
     runCompute (ChunkedComputer _ chunker) = chunker initState s
+
+wcLazy :: forall a res st comp. Statistic a res st comp => BSL.ByteString -> res
+wcLazy s = extractState $! runCompute compute
+  where
+    runCompute :: StatComputer st comp -> st
+    runCompute (ByteOnlyComputer step) = BSL.foldl' step initState s
+    runCompute (ChunkedComputer _ chunker) = BSL.foldlChunks chunker initState s
