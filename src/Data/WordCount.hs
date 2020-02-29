@@ -37,7 +37,7 @@ instance Statistic 'Bytes (Tagged 'Bytes) (Tagged 'Bytes) 'Chunked where
   initState = 0
   extractState = id
   prettyPrint (Tagged n) = show n <> " bytes"
-  compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + Tagged (fromIntegral $ BS.length str))
+  compute = ChunkedComputer (\st _ -> st + 1) (\st str -> st + fromIntegral (BS.length str))
 
 instance Statistic 'Chars (Tagged 'Chars) (Tagged 'Chars) 'ByteOnly where
   initState = 0
@@ -80,7 +80,7 @@ instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
   initState = 0
   extractState = id
   prettyPrint (Tagged n) = show n <> " lines"
-  compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + Tagged (fromIntegral $ BS.count 10 str))
+  compute = ChunkedComputer (\st c -> st + if c == 10 then 1 else 0) (\st str -> st + fromIntegral (BS.count 10 str))
 
 infixr 5 :::
 data a ::: b = a ::: b deriving (Show)
