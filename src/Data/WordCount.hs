@@ -72,6 +72,7 @@ instance Statistic 'MaxLL (Tagged 'MaxLL) MaxLLState 'ByteOnly where
       step MaxLLState { .. } c | c == 10
                               || c == 12
                               || c == 13 = MaxLLState (max maxLen curLen) 0
+                               | c < 32 = MaxLLState maxLen curLen
       step MaxLLState { .. } _ = MaxLLState maxLen (curLen + 1)
 
 instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
