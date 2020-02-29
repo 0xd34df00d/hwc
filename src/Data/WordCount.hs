@@ -69,6 +69,7 @@ instance Statistic 'MaxLL (Tagged 'MaxLL) MaxLLState 'ByteOnly where
   compute = ByteOnlyComputer step
     where
       step MaxLLState { .. } 9 = MaxLLState maxLen $ curLen + 8 - (curLen `rem` 8)
+      step MaxLLState { .. } 8 = MaxLLState maxLen $ max 0 (curLen - 1)
       step MaxLLState { .. } c | c == 10
                               || c == 12
                               || c == 13 = MaxLLState (max maxLen curLen) 0
