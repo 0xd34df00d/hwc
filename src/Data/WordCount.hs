@@ -25,7 +25,7 @@ data StatComputation st compTy where
   ByteOnlyComputation :: (st -> Word8 -> st)
                       -> StatComputation st 'ByteOnly
 
-class Statistic a res st comp | res -> a, st -> a, a -> res, a -> st, a -> comp where
+class Statistic s res st comp | res -> s, st -> s, s -> res, s -> st, s -> comp where
   initState :: st
   extractState :: st -> res
   prettyPrint :: res -> String
@@ -85,8 +85,8 @@ instance Statistic 'Lines (Tagged 'Lines) (Tagged 'Lines) 'Chunked where
 infixr 5 :::
 data a ::: b = a ::: b deriving (Show)
 
-instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ CombineCompTy compa compb)
-       => Statistic (a '::: b) (resa ::: resb) (sta ::: stb) comp where
+instance (Statistic sa resa sta compa, Statistic sb resb stb compb, comp ~ CombineCompTy compa compb)
+       => Statistic (sa '::: sb) (resa ::: resb) (sta ::: stb) comp where
   initState = initState ::: initState
   extractState (a ::: b) = extractState a ::: extractState b
   prettyPrint (a ::: b) = prettyPrint a <> "\n" <> prettyPrint b
@@ -99,14 +99,14 @@ instance (Statistic a resa sta compa, Statistic b resb stb compb, comp ~ Combine
     where
       combine fa fb = \(a ::: b) w -> fa a w ::: fb b w
 
-wc :: forall a res st comp. Statistic a res st comp => BS.ByteString -> res
+wc :: forall s res st comp. Statistic s res st comp => BS.ByteString -> res
 wc s = extractState $! runCompute computation
   where
     runCompute :: StatComputation st comp -> st
     runCompute (ByteOnlyComputation step) = BS.foldl' step initState s
     runCompute (ChunkedComputation _ chunker) = chunker initState s
 
-wcLazy :: forall a res st comp. Statistic a res st comp => BSL.ByteString -> res
+wcLazy :: forall s res st comp. Statistic s res st comp => BSL.ByteString -> res
 wcLazy s = extractState $! runCompute computation
   where
     runCompute :: StatComputation st comp -> st
