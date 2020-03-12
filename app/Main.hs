@@ -30,7 +30,7 @@ options = Options
   <*> switch (long "lines" <> short 'l' <> help "print the newline counts")
   <*> switch (long "max-line-length" <> short 'L' <> help "print the maximum display width")
   <*> switch (long "words" <> short 'w' <> help "print the word counts")
-  <*> some (argument str (metavar "FILES..."))
+  <*> many (argument str (metavar "FILES..."))
 
 main :: IO ()
 main = do
@@ -43,6 +43,8 @@ main = do
     if isRegularFile stat || isSymbolicLink stat
       then countStrict stats $ unsafeMMapFile path
       else countLazy stats $ BSL.readFile path
+
+  when (null files) $ countLazy stats BSL.getContents
   where
     countStrict stats act = do
       contents <- act
