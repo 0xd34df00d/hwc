@@ -91,11 +91,11 @@ instance (Statistic sa resa sta compa, Statistic sb resb stb compb, comp ~ Combi
   extractState (a ::: b) = extractState a ::: extractState b
   prettyPrint (a ::: b) = prettyPrint a <> "\n" <> prettyPrint b
   computation = case (computation :: StatComputation sta compa, computation :: StatComputation stb compb) of
-                 (ByteOnlyComputation a, ChunkedComputation b _) -> ByteOnlyComputation $ combine a b
-                 (ChunkedComputation a _, ByteOnlyComputation b) -> ByteOnlyComputation $ combine a b
-                 (ByteOnlyComputation a, ByteOnlyComputation b)  -> ByteOnlyComputation $ combine a b
-                 (ChunkedComputation stepA chunkA, ChunkedComputation stepB chunkB)
-                                                                 -> ChunkedComputation (combine stepA stepB) (combine chunkA chunkB)
+                     (ByteOnlyComputation a, ChunkedComputation b _) -> ByteOnlyComputation $ combine a b
+                     (ChunkedComputation a _, ByteOnlyComputation b) -> ByteOnlyComputation $ combine a b
+                     (ByteOnlyComputation a, ByteOnlyComputation b)  -> ByteOnlyComputation $ combine a b
+                     (ChunkedComputation stepA chunkA, ChunkedComputation stepB chunkB)
+                                                                     -> ChunkedComputation (combine stepA stepB) (combine chunkA chunkB)
     where
       combine fa fb = \(a ::: b) w -> fa a w ::: fb b w
 
